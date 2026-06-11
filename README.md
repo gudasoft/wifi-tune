@@ -1,10 +1,10 @@
 # wifitune
 
 Probe a WiFi adapter's signal strength and turn it into adaptive beeps for
-antenna tuning. Point your router's antennas, listen to the cadence — as signal
-improves the pause between beeps shrinks and the pitch rises; at the strongest
-spot the tone goes solid. A live terminal dashboard shows the numbers and three
-graphs.
+antenna tuning. Point your router's antennas or walk around with your laptop to
+find the best reception spot — as signal improves the pause between beeps shrinks
+and the pitch rises; at the strongest spot the tone goes solid. A live terminal
+dashboard shows the numbers and three graphs.
 
 ## How it works
 
@@ -17,7 +17,22 @@ graphs.
   full-session compressed graph.
 
 The whole binary is pure Go (`CGO_ENABLED=0`), so it cross-compiles to any
-`GOOS`/`GOARCH` with a single `go build`.
+Linux `GOARCH` (amd64, arm64, arm, …) with a single `go build`.
+
+## Platform support
+
+**Linux only.** Signal reading uses nl80211 netlink (a Linux kernel interface)
+and audio uses the PulseAudio protocol — neither exists on macOS or Windows.
+
+| Platform | Status |
+|----------|--------|
+| Linux    | supported |
+| macOS    | not supported — would need a CoreWLAN signal backend and a non-Pulse audio backend |
+| Windows  | not supported — would need a Native WiFi (`wlanapi`/`netsh`) signal backend and a WASAPI audio backend |
+
+The source files carry a `//go:build linux` constraint, so building for
+`GOOS=darwin` or `GOOS=windows` fails immediately rather than producing a binary
+that launches and then errors at runtime.
 
 ## Signal scale
 
@@ -41,7 +56,7 @@ endpoints (`-min -90`, `-max -30` by default), which you can override.
 go build -o wifitune .
 ```
 
-Cross-compile (example: ARM64 Linux, e.g. a Raspberry Pi):
+Cross-compile to another Linux architecture (example: ARM64, e.g. a Raspberry Pi):
 
 ```sh
 CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o wifitune .
@@ -65,9 +80,10 @@ Example:
 ./wifitune wlp0s20f3
 ```
 
-Turn an antenna slowly. The beep gap shrinks and pitch rises as signal climbs;
-a solid continuous tone means you've hit the configured ceiling — that's the
-spot. Press `q` (or `Ctrl-C`) to quit.
+Turn an antenna slowly, or walk around with your laptop to find the sweet spot in
+your space. The beep gap shrinks and pitch rises as signal climbs; a solid
+continuous tone means you've hit the configured ceiling — that's the spot. Press
+`q` (or `Ctrl-C`) to quit.
 
 ### Dashboard
 
@@ -129,3 +145,7 @@ q to quit
 - [`github.com/mdlayher/wifi`](https://github.com/mdlayher/wifi) — nl80211 signal reading
 - [`github.com/jfreymuth/pulse`](https://github.com/jfreymuth/pulse) — pure-Go PulseAudio playback
 - [`github.com/charmbracelet/bubbletea`](https://github.com/charmbracelet/bubbletea) + [`lipgloss`](https://github.com/charmbracelet/lipgloss) — terminal UI
+
+## Credits
+
+Developed by [Gudasoft](https://gudasoft.com/products/wifi-tune).
